@@ -4,3 +4,8 @@ numpy
 gunicorn
 tensorflow-cpu
 Pillow
+render_template
+request
+os
+image
+load_model
