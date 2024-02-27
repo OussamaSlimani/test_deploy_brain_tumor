@@ -3,54 +3,48 @@ import os
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.preprocessing import image
+from tensorflow.keras.models import load_model
 
 app = Flask(__name__)
 
-# Load the TensorFlow Lite model
-interpreter = tf.lite.Interpreter(model_path='converted_model_vgg.tflite')
-interpreter.allocate_tensors()
+def predict_tumor_class(image_path):
+    # Define the classes list
+    classes = ['Glioma Tumor', 'Meningioma Tumor', 'Normal', 'Pituitary Tumor']
 
-# Get input and output tensors
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
+    # Specify the path to the saved model
+    model_path = "Model.h5"
 
-def names(number):
-    if number == 0:
-        return 'Glioma Tumor'
-    elif number == 1:
-        return 'Meningioma Tumor'
-    elif number == 2:
-        return 'No Tumor'
-    elif number == 3:
-        return 'Pituitary Tumor'
-    else:
-        return 'unknown'
+    # Load the trained model
+    model = load_model(model_path)
 
-@app.route('/', methods=['GET'])
-def hello_world():
-    return render_template("index.html")
+    # Load and preprocess the image
+    img = image.load_img(image_path, target_size=(299, 299))
+    img_array = image.img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)
+    img_array = tf.keras.applications.xception.preprocess_input(img_array)
 
-@app.route('/', methods=['POST'])
+    # Make predictions
+    predictions = model.predict(img_array)
+
+    # Decode predictions
+    class_index = np.argmax(predictions)
+    class_label = classes[class_index]
+
+    return class_label
+
+@app.route('/', methods=['GET', 'POST'])
 def predict():
-    # Get the uploaded file
-    imagefile = request.files['imagefile']
-    image_path = "./images/" + imagefile.filename
-    imagefile.save(image_path)
+    if request.method == 'POST':
+        # Get the uploaded file
+        imagefile = request.files['imagefile']
+        image_path = "./images/" + imagefile.filename
+        imagefile.save(image_path)
 
-    # Load and resize the image
-    img = image.load_img(image_path, target_size=(128, 128))
-    x = image.img_to_array(img)
-    x = np.expand_dims(x, axis=0)
+        predicted_class = predict_tumor_class(image_path)
 
-    # Preprocess the image and make predictions using TensorFlow Lite Interpreter
-    interpreter.set_tensor(input_details[0]['index'], x)
-    interpreter.invoke()
-    res = interpreter.get_tensor(output_details[0]['index'])
+        return render_template('index.html', prediction=predicted_class)
 
-    # Get the classification with the highest probability
-    classification = np.argmax(res)
-
-    return render_template('index.html', prediction=names(classification))
+    return render_template("index.html")
 
 if __name__ == '__main__':
     app.run(port=3000, debug=True)
