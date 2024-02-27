@@ -7,24 +7,22 @@ from tensorflow.keras.models import load_model
 
 app = Flask(__name__)
 
-def predict_tumor_class(image_path):
-    # Define the classes list
-    classes = ['Glioma Tumor', 'Meningioma Tumor', 'Normal', 'Pituitary Tumor']
+# Load the trained model
+model_path = "Model.h5"
+model = load_model(model_path)
 
-    # Specify the path to the saved model
-    model_path = "Model.h5"
+# Define the classes list
+classes = ['Glioma Tumor', 'Meningioma Tumor', 'Normal', 'Pituitary Tumor']
 
-    # Load the trained model
-    model = load_model(model_path)
-
-    # Load and preprocess the image
+def preprocess_image(image_path):
     img = image.load_img(image_path, target_size=(299, 299))
     img_array = image.img_to_array(img)
     img_array = np.expand_dims(img_array, axis=0)
-    img_array = tf.keras.applications.xception.preprocess_input(img_array)
+    return tf.keras.applications.xception.preprocess_input(img_array)
 
+def predict_tumor_class(image_array):
     # Make predictions
-    predictions = model.predict(img_array)
+    predictions = model.predict(image_array)
 
     # Decode predictions
     class_index = np.argmax(predictions)
@@ -44,7 +42,11 @@ def predict():
         image_path = "./images/" + imagefile.filename
         imagefile.save(image_path)
 
-        predicted_class = predict_tumor_class(image_path)
+        # Preprocess the image
+        img_array = preprocess_image(image_path)
+
+        # Predict tumor class
+        predicted_class = predict_tumor_class(img_array)
 
         return render_template('index.html', prediction=predicted_class)
 
