@@ -37,6 +37,10 @@ def predict():
     if request.method == 'POST':
         # Get the uploaded file
         imagefile = request.files['imagefile']
+
+        # Ensure the "images" folder exists
+        os.makedirs("images", exist_ok=True)
+
         image_path = "./images/" + imagefile.filename
         imagefile.save(image_path)
 
