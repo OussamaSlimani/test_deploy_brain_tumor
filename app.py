@@ -41,6 +41,7 @@ def predict():
         # Ensure the "images" folder exists
         os.makedirs("images", exist_ok=True)
 
+
         image_path = "./images/" + imagefile.filename
         imagefile.save(image_path)
 
