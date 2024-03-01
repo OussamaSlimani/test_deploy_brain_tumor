@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 def predict_tumor_class(image_path):
     # Define the classes list
-    classes = ['Glioma Tumor', 'Meningioma Tumor', 'Normal', 'Pituitary Tumor']
+    classes = ['Glioma Tumor', 'Meningioma0 Tumor', 'Normal', 'Pituitary Tumor']
 
     # Specify the path to the saved model
     model_path = "Model.h5"
